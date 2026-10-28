@@ -24,14 +24,9 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-mongoose
-    .connect("mongodb://127.0.0.1:27017/blockchain_certificate")
-    .then(() => {
-        console.log("MongoDB connected");
-    })
-    .catch((err) => {
-        console.log("MongoDB connection error:", err);
-    });
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("MongoDB Atlas connected successfully"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
 // Test route
 app.get("/", (req, res) => {
