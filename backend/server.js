@@ -35,6 +35,8 @@ app.get("/", (req, res) => {
     });
 });
 // AI Certificate Designer
+
+// AI Certificate Designer
 app.post("/api/ai-design", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -46,12 +48,10 @@ app.post("/api/ai-design", async (req, res) => {
       });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: `
+    const designPrompt = `
 You are a professional certificate designer.
 
-Based on the user's request, generate a certificate design configuration.
+Generate a certificate design configuration based on the user's prompt.
 
 Return ONLY valid JSON with these fields:
 {
@@ -68,15 +68,42 @@ Return ONLY valid JSON with these fields:
 
 Rules:
 - Use valid hexadecimal colors.
-- Choose suitable colors based on the user's prompt.
+- Choose colors suitable for the user's prompt.
 - Keep all fields as strings.
 - Do not include Markdown or explanations.
 
 User prompt: ${prompt.trim()}
-`,
-    });
+`;
+
+    let response;
+
+    // Retry temporary Gemini service errors
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        response = await ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents: designPrompt,
+        });
+
+        break;
+      } catch (error) {
+        console.error(`Gemini attempt ${attempt} failed:`, error.status);
+
+        if (error.status !== 503 || attempt === 3) {
+          throw error;
+        }
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, attempt * 2000)
+        );
+      }
+    }
 
     const text = response.text;
+
+    if (!text) {
+      throw new Error("Gemini returned an empty response.");
+    }
 
     const jsonText = text
       .replace(/^```json\s*/i, "")
@@ -86,25 +113,26 @@ User prompt: ${prompt.trim()}
 
     const design = JSON.parse(jsonText);
 
-    res.json({
+    return res.json({
       success: true,
       design,
     });
   } catch (error) {
-    console.error("AI error status:", error.status);
-    console.error("AI error message:", error.message);
+    console.error("AI design error:", error.status, error.message);
 
-    const status = error.status || 500;
+    const status = error.status === 503 ? 503 : 500;
 
-res.status(status).json({
-  success: false,
-  message:
-    status === 503
-      ? "Gemini AI is temporarily busy. Please try again in a minute."
-      : "Failed to generate the certificate design.",
-});
+    return res.status(status).json({
+      success: false,
+      message:
+        status === 503
+          ? "Gemini AI is temporarily busy. Please try again shortly."
+          : "Unable to generate the design. Please try again.",
+    });
   }
 });
+
+
 // Frontend connection test
 app.get("/api/test", (req, res) => {
     res.json({
