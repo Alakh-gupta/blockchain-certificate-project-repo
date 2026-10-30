@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "ethers": "^6.17.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.34.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.8",

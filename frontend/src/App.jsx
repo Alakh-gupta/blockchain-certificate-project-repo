@@ -1,3 +1,4 @@
+import { jsPDF } from "jspdf";
 import { useState, useMemo,useEffect, Fragment } from 'react';
 import {
   Link2, ShieldCheck, FileCheck, Hash, QrCode, Upload, Wallet,
@@ -690,6 +691,7 @@ console.log("Transaction hash saved to MongoDB:", tx.hash);
 
     setTimeout(() => {
       setStep(4);
+      console.log("IPFS CID before creating certificate:", ipfsCID);
 
       const cert = {
         id: data.certificateId,
@@ -822,7 +824,11 @@ console.log("Transaction hash saved to MongoDB:", tx.hash);
             <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(201,162,39,0.2)' }}>
               {result.mode === 'digital' && (
                 <div style={{ marginBottom: 16 }}>
-                  <CertificateCard cert={result} template={resolveTemplate(result)} compact />
+                  <CertificateCard
+                   cert={result}
+                   template={currentTemplate}
+                   compact
+                  />
                 </div>
               )}
               <DetailRow label="Certificate ID" value={result.id} />
@@ -1189,9 +1195,70 @@ function CertificatePage({ cert, template, onBack, showToast }) {
         <DetailRow label="Transaction" value={cert.tx} href={`https://sepolia.etherscan.io/tx/${cert.tx}`} />
         {cert.mode === 'digital' && <DetailRow label="Design" value={safeTemplate.name} />}
         <div className="flex flex-wrap items-end gap-6" style={{ marginTop: 20 }}>
-          <button className="btn-primary" onClick={() => showToast('Connect IPFS storage to enable downloads.')}>
-            <Download size={16} /> Download PDF
-          </button>
+          
+<button
+className="btn-primary"
+onClick={() => {
+const pdf = new jsPDF("landscape", "mm", "a4");
+
+
+pdf.setFillColor(250, 247, 238);
+pdf.rect(0, 0, 297, 210, "F");
+
+pdf.setDrawColor(201, 162, 39);
+pdf.setLineWidth(2);
+pdf.rect(10, 10, 277, 190);
+
+pdf.setFont("times", "bold");
+pdf.setFontSize(26);
+pdf.text("CERTIFICATE OF ACHIEVEMENT", 148.5, 40, {
+  align: "center",
+});
+
+pdf.setFont("times", "normal");
+pdf.setFontSize(16);
+pdf.text("This certificate is presented to", 148.5, 65, {
+  align: "center",
+});
+
+pdf.setFont("times", "bold");
+pdf.setFontSize(25);
+pdf.text(String(cert.name || "Student"), 148.5, 85, {
+  align: "center",
+});
+
+pdf.setFont("times", "normal");
+pdf.setFontSize(16);
+pdf.text("For successfully completing", 148.5, 105, {
+  align: "center",
+});
+
+pdf.setFont("times", "bold");
+pdf.setFontSize(20);
+pdf.text(String(cert.course || "Course"), 148.5, 120, {
+  align: "center",
+});
+
+pdf.setFontSize(12);
+pdf.text(`Institution: ${cert.institution || "Institution"}`, 148.5, 145, {
+  align: "center",
+});
+pdf.text(`Issue Date: ${cert.date || ""}`, 148.5, 155, {
+  align: "center",
+});
+pdf.text(`Certificate ID: ${cert.id || ""}`, 148.5, 170, {
+  align: "center",
+});
+
+pdf.save(`certificate-${cert.id || "digital"}.pdf`);
+showToast("Certificate PDF downloaded successfully!");
+
+}}
+
+>
+
+<Download size={16} /> Download PDF </button>
+
           <QRCodeDisplay cert={cert} />
         </div>
       </div>
