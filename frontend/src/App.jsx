@@ -128,7 +128,7 @@ function hashStr(s) {
 }
 
 async function generateTemplateFromPrompt(prompt) {
-  const response = await fetch('http://localhost:5000/api/ai-design', {
+  const response = await fetch('https://blockchain-certificate-project-repo.onrender.com/api/ai-design', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -581,16 +581,17 @@ function IssuePage({
 if (mode === "pdf" && selectedFile) {
   const formData = new FormData();
   formData.append("file", selectedFile);
-
+console.log("STEP 1: Starting IPFS upload");
   const uploadResponse = await fetch(
-    "http://localhost:5000/api/upload",
+    "https://blockchain-certificate-project-repo.onrender.com/api/upload",
     {
       method: "POST",
       body: formData,
     }
   );
-
+console.log("STEP 2: IPFS upload request finished");
   const uploadData = await uploadResponse.json();
+  console.log("IPFS response received:", uploadData);
 
   if (!uploadResponse.ok) {
     throw new Error(
@@ -605,7 +606,7 @@ if (mode === "pdf" && selectedFile) {
 
   // Send certificate data to backend
   const response = await fetch(
-      "http://localhost:5000/api/certificates",
+      "https://blockchain-certificate-project-repo.onrender.com/api/certificates",
       {
         method: "POST",
         headers: {
@@ -621,6 +622,7 @@ if (mode === "pdf" && selectedFile) {
         }),
       }
     );
+    console.log("Certificate saved response status:", response.status);
 
     const data = await response.json();
 
@@ -628,7 +630,7 @@ if (mode === "pdf" && selectedFile) {
       throw new Error(data.message || "Failed to save certificate");
     }
    
-
+console.log("Certificate saved. Connecting to MetaMask...");
 // Connect to MetaMask
 const provider = new ethers.BrowserProvider(window.ethereum);
 const signer = await provider.getSigner();
@@ -659,7 +661,7 @@ await tx.wait();
 console.log("Blockchain transaction confirmed:", tx.hash);
 // Save blockchain transaction hash to MongoDB
 const updateResponse = await fetch(
-  `http://localhost:5000/api/certificates/${certificateId}`,
+  `https://blockchain-certificate-project-repo.onrender.com/api/certificates/${certificateId}`,
   {
     method: "PUT",
     headers: {
@@ -921,7 +923,7 @@ function VerifyPage({ mockDB, issuedCerts, onViewCertificate }) {
 
 try {
   const backendResponse = await fetch(
-    `http://localhost:5000/api/certificates/${encodeURIComponent(key)}`
+    `https://blockchain-certificate-project-repo.onrender.com/${encodeURIComponent(key)}`
   );
 
   if (backendResponse.ok) {
@@ -954,7 +956,7 @@ try {
     setSearching(true);
 
     const response = await fetch(
-      `http://localhost:5000/api/certificates/search?q=${encodeURIComponent(query)}`
+      `https://blockchain-certificate-project-repo.onrender.com/api/certificates/search?q=${encodeURIComponent(query)}`
     );
 
     const data = await response.json();
